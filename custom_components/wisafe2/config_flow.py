@@ -229,16 +229,50 @@ class WiSafe2OptionsFlow(config_entries.OptionsFlow):
     async def async_step_init(
         self, user_input: dict[str, Any] | None = None
     ) -> FlowResult:
-        """Manage the options."""
-        return await self.async_step_menu()
+        """Manage the options - main menu."""
+        errors: dict[str, str] = {}
 
-    async def async_step_menu(
-        self, user_input: dict[str, Any] | None = None
-    ) -> FlowResult:
-        """Show the options menu."""
-        return self.async_show_menu(
-            step_id="menu",
-            menu_options=["add_device", "manage_devices", "done"],
+        if user_input is not None:
+            action = user_input.get("action")
+            if action == "add_device":
+                return await self.async_step_add_device()
+            elif action == "remove_device":
+                return await self.async_step_remove_device()
+            elif action == "save":
+                return self.async_create_entry(
+                    title="",
+                    data={"devices": self._devices},
+                )
+
+        # Build device list for display
+        device_count = len(self._devices)
+        device_list = ", ".join(
+            d.get("name", d["device_id"]) for d in self._devices
+        ) if self._devices else "None"
+
+        action_options = [
+            selector.SelectOptionDict(value="add_device", label="Add a new device"),
+            selector.SelectOptionDict(value="remove_device", label="Remove a device"),
+            selector.SelectOptionDict(value="save", label="Save and exit"),
+        ]
+
+        return self.async_show_form(
+            step_id="init",
+            data_schema=vol.Schema(
+                {
+                    vol.Required("action", default="save"): selector.SelectSelector(
+                        selector.SelectSelectorConfig(
+                            options=action_options,
+                            mode=selector.SelectSelectorMode.LIST,
+                        )
+                    ),
+                }
+            ),
+            description_placeholders={
+                "device_count": str(device_count),
+                "device_list": device_list,
+            },
+            errors=errors,
         )
 
     async def async_step_add_device(
@@ -261,7 +295,7 @@ class WiSafe2OptionsFlow(config_entries.OptionsFlow):
                     "name": user_input.get("name"),
                     "location": user_input.get("location"),
                 })
-                return await self.async_step_menu()
+                return await self.async_step_init()
 
         model_options = [
             selector.SelectOptionDict(
@@ -295,20 +329,20 @@ class WiSafe2OptionsFlow(config_entries.OptionsFlow):
             errors=errors,
         )
 
-    async def async_step_manage_devices(
+    async def async_step_remove_device(
         self, user_input: dict[str, Any] | None = None
     ) -> FlowResult:
-        """Manage existing devices."""
+        """Remove an existing device."""
         if user_input is not None:
             device_to_remove = user_input.get("remove_device")
             if device_to_remove:
                 self._devices = [
                     d for d in self._devices if d["device_id"] != device_to_remove
                 ]
-            return await self.async_step_menu()
+            return await self.async_step_init()
 
         if not self._devices:
-            return await self.async_step_menu()
+            return await self.async_step_init()
 
         device_options = [
             selector.SelectOptionDict(
@@ -319,7 +353,7 @@ class WiSafe2OptionsFlow(config_entries.OptionsFlow):
         ]
 
         return self.async_show_form(
-            step_id="manage_devices",
+            step_id="remove_device",
             data_schema=vol.Schema(
                 {
                     vol.Optional("remove_device"): selector.SelectSelector(
@@ -330,15 +364,6 @@ class WiSafe2OptionsFlow(config_entries.OptionsFlow):
                     ),
                 }
             ),
-        )
-
-    async def async_step_done(
-        self, user_input: dict[str, Any] | None = None
-    ) -> FlowResult:
-        """Save options and exit."""
-        return self.async_create_entry(
-            title="",
-            data={"devices": self._devices},
         )
 
 

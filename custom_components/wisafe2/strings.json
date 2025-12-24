@@ -52,15 +52,9 @@
     "step": {
       "init": {
         "title": "WiSafe2 Options",
-        "description": "Configure your WiSafe2 devices."
-      },
-      "menu": {
-        "title": "WiSafe2 Options",
-        "description": "What would you like to do?",
-        "menu_options": {
-          "add_device": "Add a new device",
-          "manage_devices": "Manage existing devices",
-          "done": "Save and exit"
+        "description": "Currently configured: {device_count} device(s) ({device_list})",
+        "data": {
+          "action": "Action"
         }
       },
       "add_device": {
@@ -79,11 +73,11 @@
           "location": "Room or area where the device is installed"
         }
       },
-      "manage_devices": {
-        "title": "Manage Devices",
-        "description": "Select a device to remove, or leave empty to go back.",
+      "remove_device": {
+        "title": "Remove Device",
+        "description": "Select a device to remove.",
         "data": {
-          "remove_device": "Remove Device"
+          "remove_device": "Device to Remove"
         }
       }
     },
