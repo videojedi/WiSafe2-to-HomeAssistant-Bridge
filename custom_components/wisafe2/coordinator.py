@@ -12,6 +12,7 @@ import serial.tools.list_ports
 
 from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator
+from homeassistant.util import dt as dt_util
 
 from .const import (
     DOMAIN,
@@ -62,7 +63,7 @@ class WiSafe2Device:
 
     def update_from_message(self, data: dict[str, Any]) -> None:
         """Update device state from a parsed message."""
-        self.last_seen = datetime.now()
+        self.last_seen = dt_util.utcnow()
 
         if "battery" in data:
             self.battery_status = data["battery"]
@@ -114,7 +115,7 @@ class WiSafe2Coordinator(DataUpdateCoordinator):
         """Return if bridge is online."""
         if self._last_heartbeat is None:
             return False
-        return (datetime.now() - self._last_heartbeat).total_seconds() < HEARTBEAT_TIMEOUT
+        return (dt_util.utcnow() - self._last_heartbeat).total_seconds() < HEARTBEAT_TIMEOUT
 
     @property
     def devices(self) -> dict[str, WiSafe2Device]:
@@ -222,7 +223,7 @@ class WiSafe2Coordinator(DataUpdateCoordinator):
 
         # Check for heartbeat (Arduino uses "heartBeat" with capital B)
         if "heartBeat" in data:
-            self._last_heartbeat = datetime.now()
+            self._last_heartbeat = dt_util.utcnow()
             self._bridge_online = True
             self._bridge_device.last_seen = self._last_heartbeat
             self._bridge_device.is_online = True
